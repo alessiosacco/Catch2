@@ -1,7 +1,7 @@
 
 //              Copyright Catch2 Authors
 // Distributed under the Boost Software License, Version 1.0.
-//   (See accompanying file LICENSE_1_0.txt or copy at
+//   (See accompanying file LICENSE.txt or copy at
 //        https://www.boost.org/LICENSE_1_0.txt)
 
 // SPDX-License-Identifier: BSL-1.0
@@ -28,6 +28,7 @@
 #include <catch2/reporters/catch_reporter_cumulative_base.hpp>
 #include <catch2/reporters/catch_reporter_event_listener.hpp>
 #include <catch2/reporters/catch_reporter_helpers.hpp>
+#include <catch2/reporters/catch_reporter_json.hpp>
 #include <catch2/reporters/catch_reporter_junit.hpp>
 #include <catch2/reporters/catch_reporter_multi.hpp>
 #include <catch2/reporters/catch_reporter_registrars.hpp>

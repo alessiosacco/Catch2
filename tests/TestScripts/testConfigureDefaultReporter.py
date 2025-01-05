@@ -2,7 +2,7 @@
 
 #              Copyright Catch2 Authors
 # Distributed under the Boost Software License, Version 1.0.
-#   (See accompanying file LICENSE_1_0.txt or copy at
+#   (See accompanying file LICENSE.txt or copy at
 #        https://www.boost.org/LICENSE_1_0.txt)
 
 # SPDX-License-Identifier: BSL-1.0
@@ -28,17 +28,23 @@ if len(sys.argv) != 3:
 catch2_source_path = os.path.abspath(sys.argv[1])
 build_dir_path = os.path.join(os.path.abspath(sys.argv[2]), 'CMakeConfigTests', 'DefaultReporter')
 
+output_file = f"{build_dir_path}/foo.xml"
+# We need to escape backslashes in Windows paths, because otherwise they
+# are interpreted as escape characters in strings, and cause compilation
+# error.
+escaped_output_file = output_file.replace('\\', '\\\\')
 configure_and_build(catch2_source_path,
                     build_dir_path,
-                    [("CATCH_CONFIG_DEFAULT_REPORTER", "compact")])
+                    [("CATCH_CONFIG_DEFAULT_REPORTER", f"xml::out={escaped_output_file}")])
 
 stdout, _ = run_and_return_output(os.path.join(build_dir_path, 'tests'), 'SelfTest', ['[approx][custom]'])
 
-
-# This matches the summary line made by compact reporter, console reporter's
-# summary line does not match the regex.
-summary_regex = 'Passed \d+ test case with \d+ assertions.'
-if not re.search(summary_regex, stdout):
-    print("Could not find '{}' in the stdout".format(summary_regex))
-    print('stdout: "{}"'.format(stdout))
+if not os.path.exists(output_file):
+    print(f'Did not find the {output_file} file')
     exit(2)
+
+xml_tag = '</Catch2TestRun>'
+with open(output_file, 'r', encoding='utf-8') as file:
+    if xml_tag not in file.read():
+        print(f"Could not find '{xml_tag}' in the file")
+        exit(3)

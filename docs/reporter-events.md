@@ -96,12 +96,12 @@ void assertionStarting( AssertionInfo const& assertionInfo );
 void assertionEnded( AssertionStats const& assertionStats );
 ```
 
-`assertionStarting` is called after the expression is captured, but before
-the assertion expression is evaluated. This might seem like a minor
-distinction, but what it means is that if you have assertion like
-`REQUIRE( a + b == c + d )`, then what happens is that `a + b` and `c + d`
-are evaluated before `assertionStarting` is emitted, while the `==` is
-evaluated after the event.
+The `assertionStarting` event is emitted before the expression in the
+assertion is captured or evaluated and `assertionEnded` is emitted
+afterwards. This means that given assertion like `REQUIRE(a + b == c + d)`,
+Catch2 first emits `assertionStarting` event, then `a + b` and `c + d`
+are evaluated, then their results are captured, the comparison is evaluated,
+and then `assertionEnded` event is emitted.
 
 
 ## Benchmarking events
@@ -138,7 +138,7 @@ benchmarking itself fails.
 > Introduced in Catch2 3.0.1.
 
 Listings events are events that correspond to the test binary being
-invoked with `--list-foo` flag. 
+invoked with `--list-foo` flag.
 
 There are currently 3 listing events, one for reporters, one for tests,
 and one for tags. Note that they are not exclusive to each other.

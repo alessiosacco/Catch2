@@ -7,7 +7,7 @@ correct_licence = """\
 
 //              Copyright Catch2 Authors
 // Distributed under the Boost Software License, Version 1.0.
-//   (See accompanying file LICENSE_1_0.txt or copy at
+//   (See accompanying file LICENSE.txt or copy at
 //        https://www.boost.org/LICENSE_1_0.txt)
 
 // SPDX-License-Identifier: BSL-1.0
@@ -33,7 +33,8 @@ def check_licences_in_path(path: str) -> int:
 
 def check_licences():
     failed = 0
-    roots = ['src/catch2', 'tests']
+    # Add 'extras' after the amalgamted files are regenerated with the new script (past 3.4.0)
+    roots = ['src/catch2', 'tests', 'examples', 'fuzzing']
     for root in roots:
         failed += check_licences_in_path(root)
     

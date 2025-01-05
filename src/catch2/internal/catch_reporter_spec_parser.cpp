@@ -1,7 +1,7 @@
 
 //              Copyright Catch2 Authors
 // Distributed under the Boost Software License, Version 1.0.
-//   (See accompanying file LICENSE_1_0.txt or copy at
+//   (See accompanying file LICENSE.txt or copy at
 //        https://www.boost.org/LICENSE_1_0.txt)
 
 // SPDX-License-Identifier: BSL-1.0
@@ -21,9 +21,9 @@ namespace Catch {
         };
 
         kvPair splitKVPair(StringRef kvString) {
-            auto splitPos = static_cast<size_t>( std::distance(
-                kvString.begin(),
-                std::find( kvString.begin(), kvString.end(), '=' ) ) );
+            auto splitPos = static_cast<size_t>(
+                std::find( kvString.begin(), kvString.end(), '=' ) -
+                kvString.begin() );
 
             return { kvString.substr( 0, splitPos ),
                      kvString.substr( splitPos + 1, kvString.size() ) };
@@ -117,7 +117,7 @@ namespace Catch {
             auto kv = splitKVPair( parts[i] );
             auto key = kv.key, value = kv.value;
 
-            if ( key.empty() || value.empty() ) {
+            if ( key.empty() || value.empty() ) { // NOLINT(bugprone-branch-clone)
                 return {};
             } else if ( key[0] == 'X' ) {
                 // This is a reporter-specific option, we don't check these

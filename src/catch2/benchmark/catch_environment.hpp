@@ -1,7 +1,7 @@
 
 //              Copyright Catch2 Authors
 // Distributed under the Boost Software License, Version 1.0.
-//   (See accompanying file LICENSE_1_0.txt or copy at
+//   (See accompanying file LICENSE.txt or copy at
 //        https://www.boost.org/LICENSE_1_0.txt)
 
 // SPDX-License-Identifier: BSL-1.0
@@ -15,21 +15,13 @@
 
 namespace Catch {
     namespace Benchmark {
-        template <typename Duration>
         struct EnvironmentEstimate {
-            Duration mean;
+            FDuration mean;
             OutlierClassification outliers;
-
-            template <typename Duration2>
-            operator EnvironmentEstimate<Duration2>() const {
-                return { mean, outliers };
-            }
         };
-        template <typename Clock>
         struct Environment {
-            using clock_type = Clock;
-            EnvironmentEstimate<FloatDuration<Clock>> clock_resolution;
-            EnvironmentEstimate<FloatDuration<Clock>> clock_cost;
+            EnvironmentEstimate clock_resolution;
+            EnvironmentEstimate clock_cost;
         };
     } // namespace Benchmark
 } // namespace Catch

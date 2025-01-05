@@ -1,7 +1,7 @@
 
 //              Copyright Catch2 Authors
 // Distributed under the Boost Software License, Version 1.0.
-//   (See accompanying file LICENSE_1_0.txt or copy at
+//   (See accompanying file LICENSE.txt or copy at
 //        https://www.boost.org/LICENSE_1_0.txt)
 
 // SPDX-License-Identifier: BSL-1.0
@@ -19,7 +19,7 @@ namespace Catch {
     class ITestCaseRegistry;
     class IExceptionTranslatorRegistry;
     class IExceptionTranslator;
-    class IReporterRegistry;
+    class ReporterRegistry;
     class IReporterFactory;
     class ITagAliasRegistry;
     class ITestInvoker;
@@ -35,7 +35,7 @@ namespace Catch {
     public:
         virtual ~IRegistryHub(); // = default
 
-        virtual IReporterRegistry const& getReporterRegistry() const = 0;
+        virtual ReporterRegistry const& getReporterRegistry() const = 0;
         virtual ITestCaseRegistry const& getTestCaseRegistry() const = 0;
         virtual ITagAliasRegistry const& getTagAliasRegistry() const = 0;
         virtual IExceptionTranslatorRegistry const& getExceptionTranslatorRegistry() const = 0;

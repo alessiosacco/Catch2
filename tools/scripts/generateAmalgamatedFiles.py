@@ -1,4 +1,9 @@
 #!/usr/bin/env python3
+#              Copyright Catch2 Authors
+# Distributed under the Boost Software License, Version 1.0.
+#   (See accompanying file LICENSE.txt or copy at
+#        https://www.boost.org/LICENSE_1_0.txt)
+# SPDX-License-Identifier: BSL-1.0
 
 import os
 import re
@@ -12,11 +17,13 @@ starting_header = os.path.join(root_path, 'catch2', 'catch_all.hpp')
 output_header = os.path.join(catchPath, 'extras', 'catch_amalgamated.hpp')
 output_cpp = os.path.join(catchPath, 'extras', 'catch_amalgamated.cpp')
 
+# REUSE-IgnoreStart
+
 # These are the copyright comments in each file, we want to ignore them
 copyright_lines = [
 '//              Copyright Catch2 Authors\n',
 '// Distributed under the Boost Software License, Version 1.0.\n',
-'//   (See accompanying file LICENSE_1_0.txt or copy at\n',
+'//   (See accompanying file LICENSE.txt or copy at\n',
 '//        https://www.boost.org/LICENSE_1_0.txt)\n',
 '// SPDX-License-Identifier: BSL-1.0\n',
 ]
@@ -24,9 +31,10 @@ copyright_lines = [
 # The header of the amalgamated file: copyright information + explanation
 # what this file is.
 file_header = '''\
+
 //              Copyright Catch2 Authors
 // Distributed under the Boost Software License, Version 1.0.
-//   (See accompanying file LICENSE_1_0.txt or copy at
+//   (See accompanying file LICENSE.txt or copy at
 //        https://www.boost.org/LICENSE_1_0.txt)
 
 // SPDX-License-Identifier: BSL-1.0
@@ -38,6 +46,8 @@ file_header = '''\
 //  You probably shouldn't edit it directly.
 //  ----------------------------------------------------------
 '''
+
+# REUSE-IgnoreEnd
 
 # Returns file header with proper version string and generation time
 def formatted_file_header(version):
@@ -108,6 +118,7 @@ def generate_cpp():
     with open(output_cpp, mode='w', encoding='utf-8') as cpp:
         cpp.write(formatted_file_header(Version()))
         cpp.write('\n#include "catch_amalgamated.hpp"\n')
+        concatenate_file(cpp, os.path.join(root_path, 'catch2/internal/catch_windows_h_proxy.hpp'), False)
         for file in cpp_files:
             concatenate_file(cpp, file, False)
     print('Concatenated {} cpp files'.format(len(cpp_files)))

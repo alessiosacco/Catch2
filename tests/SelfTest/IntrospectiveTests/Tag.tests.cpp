@@ -1,7 +1,7 @@
 
 //              Copyright Catch2 Authors
 // Distributed under the Boost Software License, Version 1.0.
-//   (See accompanying file LICENSE_1_0.txt or copy at
+//   (See accompanying file LICENSE.txt or copy at
 //        https://www.boost.org/LICENSE_1_0.txt)
 
 // SPDX-License-Identifier: BSL-1.0
@@ -98,7 +98,20 @@ TEST_CASE( "Test case with identical tags keeps just one", "[tags]" ) {
     REQUIRE( testCase.tags[0] == Tag( "tag1" ) );
 }
 
-TEST_CASE( "Empty tag is not allowed" ) {
-    REQUIRE_THROWS( Catch::TestCaseInfo(
-        "", { "fake test name", "[]" }, dummySourceLineInfo ) );
+TEST_CASE("Mismatched square brackets in tags are caught and reported",
+          "[tags][approvals]") {
+    using Catch::TestCaseInfo;
+    using Catch::Matchers::ContainsSubstring;
+            REQUIRE_THROWS_WITH( TestCaseInfo( "",
+                                       { "test with unclosed tag", "[abc" },
+                                       dummySourceLineInfo ),
+                         ContainsSubstring("registering test case 'test with unclosed tag'") );
+    REQUIRE_THROWS_WITH( TestCaseInfo( "",
+                      { "test with nested tags", "[abc[def]]" },
+                      dummySourceLineInfo ),
+        ContainsSubstring("registering test case 'test with nested tags'") );
+    REQUIRE_THROWS_WITH( TestCaseInfo( "",
+                      { "test with superfluous close tags", "[abc][def]]" },
+                      dummySourceLineInfo ),
+        ContainsSubstring("registering test case 'test with superfluous close tags'") );
 }

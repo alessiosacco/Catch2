@@ -1,7 +1,7 @@
 
 //              Copyright Catch2 Authors
 // Distributed under the Boost Software License, Version 1.0.
-//   (See accompanying file LICENSE_1_0.txt or copy at
+//   (See accompanying file LICENSE.txt or copy at
 //        https://www.boost.org/LICENSE_1_0.txt)
 
 // SPDX-License-Identifier: BSL-1.0
@@ -16,21 +16,23 @@
 
 namespace {
     std::uint64_t Fibonacci(std::uint64_t number) {
-        return number < 2 ? 1 : Fibonacci(number - 1) + Fibonacci(number - 2);
+        return number < 2 ? number : Fibonacci(number - 1) + Fibonacci(number - 2);
     }
 }
 
 TEST_CASE("Benchmark Fibonacci", "[!benchmark]") {
-    CHECK(Fibonacci(0) == 1);
+    CHECK(Fibonacci(0) == 0);
     // some more asserts..
-    CHECK(Fibonacci(5) == 8);
+    CHECK(Fibonacci(5) == 5);
     // some more asserts..
 
-    BENCHMARK("Fibonacci 20") {
+    REQUIRE( Fibonacci( 20 ) == 6'765 );
+    BENCHMARK( "Fibonacci 20" ) {
         return Fibonacci(20);
     };
 
-    BENCHMARK("Fibonacci 25") {
+    REQUIRE( Fibonacci( 25 ) == 75'025 );
+    BENCHMARK( "Fibonacci 25" ) {
         return Fibonacci(25);
     };
 
@@ -88,14 +90,14 @@ TEST_CASE("Benchmark containers", "[!benchmark]") {
         };
         REQUIRE(v.size() == size);
 
-        int array[size];
+        int array[size] {};
         BENCHMARK("A fixed size array that should require no allocations") {
             for (int i = 0; i < size; ++i)
                 array[i] = i;
         };
         int sum = 0;
-        for (int i = 0; i < size; ++i)
-            sum += array[i];
+        for (int val : array)
+            sum += val;
         REQUIRE(sum > size);
 
         SECTION("XYZ") {
@@ -119,8 +121,8 @@ TEST_CASE("Benchmark containers", "[!benchmark]") {
                 runs = benchmarkIndex;
             };
 
-            for (size_t i = 0; i < v.size(); ++i) {
-                REQUIRE(v[i] == runs);
+            for (int val : v) {
+                REQUIRE(val == runs);
             }
         }
     }
@@ -133,8 +135,8 @@ TEST_CASE("Benchmark containers", "[!benchmark]") {
             for (int i = 0; i < size; ++i)
                 v[i] = generated;
         };
-        for (size_t i = 0; i < v.size(); ++i) {
-            REQUIRE(v[i] == generated);
+        for (int val : v) {
+            REQUIRE(val == generated);
         }
     }
 

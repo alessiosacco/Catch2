@@ -85,43 +85,102 @@ Click one of the following links to take you straight to that option - or scroll
 
 <pre>&lt;test-spec> ...</pre>
 
-Test cases, wildcarded test cases, tags and tag expressions are all passed directly as arguments. Tags are distinguished by being enclosed in square brackets.
+By providing a test spec, you filter which tests will be run. If you call
+Catch2 without any test spec, then it will run all non-hidden test
+cases. A test case is hidden if it has the `[!benchmark]` tag, any tag
+with a dot at the start, e.g. `[.]` or `[.foo]`.
 
-If no test specs are supplied then all test cases, except "hidden" tests, are run.
-A test is hidden by giving it any tag starting with (or just) a period (```.```) - or, in the deprecated case, tagged ```[hide]``` or given name starting with `'./'`. To specify hidden tests from the command line ```[.]``` or ```[hide]``` can be used *regardless of how they were declared*.
+There are three basic test specs that can then be combined into more
+complex specs:
 
-Specs must be enclosed in quotes if they contain spaces. If they do not contain spaces the quotes are optional.
+  * Full test name, e.g. `"Test 1"`.
 
-Wildcards consist of the `*` character at the beginning and/or end of test case names and can substitute for any number of any characters (including none).
+    This allows only test cases whose name is "Test 1".
 
-Test specs are case insensitive.
+  * Wildcarded test name, e.g. `"*Test"`, or `"Test*"`, or `"*Test*"`.
 
-If a spec is prefixed with `exclude:` or the `~` character then the pattern matches an exclusion. This means that tests matching the pattern are excluded from the set - even if a prior inclusion spec included them. Subsequent inclusion specs will take precedence, however.
-Inclusions and exclusions are evaluated in left-to-right order.
+    This allows any test case whose name ends with, starts with, or contains
+    in the middle the string "Test". Note that the wildcard can only be at
+    the start or end.
 
-Test case examples:
+  * Tag name, e.g. `[some-tag]`.
 
+    This allows any test case tagged with "[some-tag]". Remember that some
+    tags are special, e.g. those that start with "." or with "!".
+
+
+You can also combine the basic test specs to create more complex test
+specs. You can:
+
+  * Concatenate specs to apply all of them, e.g. `[some-tag][other-tag]`.
+
+    This allows test cases that are tagged with **both** "[some-tag]" **and**
+    "[other-tag]". A test case with just "[some-tag]" will not pass the filter,
+    nor will test case with just "[other-tag]".
+
+  * Comma-join specs to apply any of them, e.g. `[some-tag],[other-tag]`.
+
+    This allows test cases that are tagged with **either** "[some-tag]" **or**
+    "[other-tag]". A test case with both will obviously also pass the filter.
+
+    Note that commas take precendence over simple concatenation. This means
+    that `[a][b],[c]` accepts tests that are tagged with either both "[a]" and
+    "[b]", or tests that are tagged with just "[c]".
+
+  * Negate the spec by prepending it with `~`, e.g. `~[some-tag]`.
+
+    This rejects any test case that is tagged with "[some-tag]". Note that
+    rejection takes precedence over other filters.
+
+    Note that negations always binds to the following _basic_ test spec.
+    This means that `~[foo][bar]` negates only the "[foo]" tag and not the
+    "[bar]" tag.
+
+Note that when Catch2 is deciding whether to include a test, first it
+checks whether the test matches any negative filters. If it does,
+the test is rejected. After that, the behaviour depends on whether there
+are positive filters as well. If there are no positive filters, all
+remaining non-hidden tests are included. If there are positive filters,
+only tests that match the positive filters are included.
+
+You can also match test names with special characters by escaping them
+with a backslash (`"\"`), e.g. a test named `"Do A, then B"` is matched
+by `"Do A\, then B"` test spec. Backslash also escapes itself.
+
+
+### Examples
+
+Given these TEST_CASEs,
 ```
-thisTestOnly            Matches the test case called, 'thisTestOnly'
-"this test only"        Matches the test case called, 'this test only'
-these*                  Matches all cases starting with 'these'
-exclude:notThis         Matches all tests except, 'notThis'
-~notThis                Matches all tests except, 'notThis'
-~*private*              Matches all tests except those that contain 'private'
-a* ~ab* abc             Matches all tests that start with 'a', except those that
-                        start with 'ab', except 'abc', which is included
-~[tag1]                 Matches all tests except those tagged with '[tag1]'
--# [#somefile]          Matches all tests from the file 'somefile.cpp'
+TEST_CASE("Test 1") {}
+
+TEST_CASE("Test 2", "[.foo]") {}
+
+TEST_CASE("Test 3", "[.bar]") {}
+
+TEST_CASE("Test 4", "[.][foo][bar]") {}
 ```
 
-Names within square brackets are interpreted as tags.
-A series of tags form an AND expression whereas a comma-separated sequence forms an OR expression. e.g.:
+this is the result of these filters
+```
+./tests                      # Selects only the first test, others are hidden
+./tests "Test 1"             # Selects only the first test, other do not match
+./tests ~"Test 1"            # Selects no tests. Test 1 is rejected, other tests are hidden
+./tests "Test *"             # Selects all tests.
+./tests [bar]                # Selects tests 3 and 4. Other tests are not tagged [bar]
+./tests ~[foo]               # Selects test 1, because it is the only non-hidden test without [foo] tag
+./tests [foo][bar]           # Selects test 4.
+./tests [foo],[bar]          # Selects tests 2, 3, 4.
+./tests ~[foo][bar]          # Selects test 3. 2 and 4 are rejected due to having [foo] tag
+./tests ~"Test 2"[foo]       # Selects test 4, because test 2 is explicitly rejected
+./tests [foo][bar],"Test 1"  # Selects tests 1 and 4.
+./tests "Test 1*"            # Selects test 1, wildcard can match zero characters
+```
 
-<pre>[one][two],[three]</pre>
-This matches all tests tagged `[one]` and `[two]`, as well as all tests tagged `[three]`
+_Note: Using plain asterisk on a command line can cause issues with shell
+expansion. Make sure that the asterisk is passed to Catch2 and is not
+interpreted by the shell._
 
-Test names containing special characters, such as `,` or `[` can specify them on the command line using `\`.
-`\` also escapes itself.
 
 <a id="choosing-a-reporter-to-use"></a>
 ## Choosing a reporter to use
@@ -135,7 +194,8 @@ verbose and human-friendly output.
 
 Reporters are also individually configurable. To pass configuration options
 to the reporter, you append `::key=value` to the reporter specification
-as many times as you want, e.g. `--reporter xml::out=someFile.xml`.
+as many times as you want, e.g. `--reporter xml::out=someFile.xml` or
+`--reporter custom::colour-mode=ansi::Xoption=2`.
 
 The keys must either be prefixed by "X", in which case they are not parsed
 by Catch2 and are only passed down to the reporter, or one of options
@@ -148,7 +208,7 @@ validity, and throw an error if they are wrong._
 > Support for passing arguments to reporters through the `-r`, `--reporter` flag was introduced in Catch2 3.0.1
 
 There are multiple built-in reporters, you can see what they do by using the
-[`--list-reporter`](command-line.md#listing-available-tests-tags-or-reporters)
+[`--list-reporters`](command-line.md#listing-available-tests-tags-or-reporters)
 flag. If you need a reporter providing custom format outside of the already
 provided ones, look at the ["write your own reporter" part of the reporter
 documentation](reporters.md#writing-your-own-reporter).
@@ -284,7 +344,7 @@ This option transforms tabs and newline characters into ```\t``` and ```\n``` re
 <pre>-w, --warn &lt;warning name></pre>
 
 You can think of Catch2's warnings as the equivalent of `-Werror` (`/WX`)
-flag for C++ compilers. It turns some suspicious occurences, like a section
+flag for C++ compilers. It turns some suspicious occurrences, like a section
 without assertions, into errors. Because these might be intended, warnings
 are not enabled by default, but user can opt in.
 
@@ -306,14 +366,14 @@ There are currently two warnings implemented:
 ## Reporting timings
 <pre>-d, --durations &lt;yes/no></pre>
 
-When set to ```yes``` Catch will report the duration of each test case, in milliseconds. Note that it does this regardless of whether a test case passes or fails. Note, also, the certain reporters (e.g. Junit) always report test case durations regardless of this option being set or not.
+When set to ```yes``` Catch will report the duration of each test case, in seconds with millisecond precision. Note that it does this regardless of whether a test case passes or fails. Note, also, the certain reporters (e.g. Junit) always report test case durations regardless of this option being set or not.
 
 <pre>-D, --min-duration &lt;value></pre>
 
 > `--min-duration` was [introduced](https://github.com/catchorg/Catch2/pull/1910) in Catch2 2.13.0
 
 When set, Catch will report the duration of each test case that took more
-than &lt;value> seconds, in milliseconds. This option is overriden by both
+than &lt;value> seconds, in seconds with millisecond precision. This option is overridden by both
 `-d yes` and `-d no`, so that either all durations are reported, or none
 are.
 
@@ -339,8 +399,8 @@ Test cases are ordered one of three ways:
 
 ### decl
 Declaration order (this is the default order if no --order argument is provided).
-Tests in the same TU are sorted using their declaration orders, different
-TUs are in an implementation (linking) dependent order.
+Tests in the same translation unit are sorted using their declaration orders,
+different TUs are sorted in an implementation (linking) dependent order.
 
 
 ### lex
@@ -507,10 +567,13 @@ start of the first section.</br>
 ## Filenames as tags
 <pre>-#, --filenames-as-tags</pre>
 
-When this option is used then every test is given an additional tag which is formed of the unqualified
-filename it is found in, with any extension stripped, prefixed with the `#` character.
+This option adds an extra tag to all test cases. The tag is `#` followed
+by the unqualified filename the test case is defined in, with the _last_
+extension stripped out.
 
-So, for example,  tests within the file `~\Dev\MyProject\Ferrets.cpp` would be tagged `[#Ferrets]`.
+For example, tests within the file `tests\SelfTest\UsageTests\BDD.tests.cpp`
+will be given the `[#BDD.tests]` tag.
+
 
 <a id="colour-mode"></a>
 ## Override output colouring
@@ -548,7 +611,8 @@ starting at 0. The tests in the set given by
 `--shard-index <#shard index to run>` will be executed. The default shard
 count is `1`, and the default index to run is `0`.
 
-_It is an error to specify a shard index greater than the number of shards._
+_Shard index must be less than number of shards. As the name suggests,
+it is treated as an index of the shard to run._
 
 Sharding is useful when you want to split test execution across multiple
 processes, as is done with the [Bazel test sharding](https://docs.bazel.build/versions/main/test-encyclopedia.html#test-sharding).
@@ -560,17 +624,17 @@ processes, as is done with the [Bazel test sharding](https://docs.bazel.build/ve
 
 > Introduced in Catch2 3.0.1.
 
-By default, Catch2 test binaries return non-0 exit code if no tests were
-run, e.g. if the binary was compiled with no tests, or the provided test
-spec matched no tests. This flag overrides that, so a test run with no
-tests still returns 0.
+By default, Catch2 test binaries return non-0 exit code if no tests were run,
+e.g. if the binary was compiled with no tests, the provided test spec matched no
+tests, or all tests [were skipped at runtime](skipping-passing-failing.md#top). This flag
+overrides that, so a test run with no tests still returns 0.
 
 ## Output verbosity
 ```
 -v, --verbosity <quiet|normal|high>
 ```
 
-Changing verbosity might change how much details Catch2's reporters output.
+Changing verbosity might change how many details Catch2's reporters output.
 However, you should consider changing the verbosity level as a _suggestion_.
 Not all reporters support all verbosity levels, e.g. because the reporter's
 format cannot meaningfully change. In that case, the verbosity level is

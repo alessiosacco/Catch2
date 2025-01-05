@@ -1,7 +1,7 @@
 
 //              Copyright Catch2 Authors
 // Distributed under the Boost Software License, Version 1.0.
-//   (See accompanying file LICENSE_1_0.txt or copy at
+//   (See accompanying file LICENSE.txt or copy at
 //        https://www.boost.org/LICENSE_1_0.txt)
 
 // SPDX-License-Identifier: BSL-1.0
@@ -9,6 +9,8 @@
 #if defined( __GNUC__ ) || defined( __clang__ )
 #    pragma GCC diagnostic ignored "-Wfloat-equal"
 #endif
+
+#include <helpers/range_test_helpers.hpp>
 
 #include <catch2/catch_approx.hpp>
 #include <catch2/catch_test_macros.hpp>
@@ -411,6 +413,7 @@ TEST_CASE("GENERATE handles function (pointers)", "[generators][compilation][app
 
 TEST_CASE("GENERATE decays arrays", "[generators][compilation][approvals]") {
     auto str = GENERATE("abc", "def", "gh");
+    (void)str;
     STATIC_REQUIRE(std::is_same<decltype(str), const char*>::value);
 }
 
@@ -533,4 +536,40 @@ TEST_CASE( "Random generators can be seeded", "[generators][approvals]" ) {
             rng2.next();
         }
     }
+}
+
+TEST_CASE("Filter generator throws exception for empty generator",
+          "[generators]") {
+    using namespace Catch::Generators;
+
+    REQUIRE_THROWS_AS(
+        filter( []( int ) { return false; }, value( 3 ) ),
+        Catch::GeneratorException );
+}
+
+TEST_CASE("from_range(container) supports ADL begin/end and arrays", "[generators][from-range][approvals]") {
+    using namespace Catch::Generators;
+
+    SECTION("C array") {
+        int arr[3]{ 5, 6, 7 };
+        auto gen = from_range( arr );
+        REQUIRE( gen.get() == 5 );
+        REQUIRE( gen.next() );
+        REQUIRE( gen.get() == 6 );
+        REQUIRE( gen.next() );
+        REQUIRE( gen.get() == 7 );
+        REQUIRE_FALSE( gen.next() );
+    }
+
+    SECTION( "ADL range" ) {
+        unrelated::needs_ADL_begin<int> range{ 1, 2, 3 };
+        auto gen = from_range( range );
+        REQUIRE( gen.get() == 1 );
+        REQUIRE( gen.next() );
+        REQUIRE( gen.get() == 2 );
+        REQUIRE( gen.next() );
+        REQUIRE( gen.get() == 3 );
+        REQUIRE_FALSE( gen.next() );
+    }
+
 }

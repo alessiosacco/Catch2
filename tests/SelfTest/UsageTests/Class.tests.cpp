@@ -1,7 +1,7 @@
 
 //              Copyright Catch2 Authors
 // Distributed under the Boost Software License, Version 1.0.
-//   (See accompanying file LICENSE_1_0.txt or copy at
+//   (See accompanying file LICENSE.txt or copy at
 //        https://www.boost.org/LICENSE_1_0.txt)
 
 // SPDX-License-Identifier: BSL-1.0
@@ -32,6 +32,10 @@ namespace {
         int m_a;
     };
 
+    struct Persistent_Fixture {
+        mutable int m_a = 0;
+    };
+
     template <typename T> struct Template_Fixture {
         Template_Fixture(): m_a( 1 ) {}
 
@@ -39,7 +43,7 @@ namespace {
     };
 
     template <typename T> struct Template_Fixture_2 {
-        Template_Fixture_2() {}
+        Template_Fixture_2() = default;
 
         T m_a;
     };
@@ -62,6 +66,17 @@ METHOD_AS_TEST_CASE( TestClass::failingCase, "A METHOD_AS_TEST_CASE based test r
 TEST_CASE_METHOD( Fixture, "A TEST_CASE_METHOD based test run that succeeds", "[class]" )
 {
     REQUIRE( m_a == 1 );
+}
+
+TEST_CASE_PERSISTENT_FIXTURE( Persistent_Fixture, "A TEST_CASE_PERSISTENT_FIXTURE based test run that succeeds", "[class]" )
+{
+    SECTION( "First partial run" ) {
+        REQUIRE( m_a++ == 0 );
+    }
+
+    SECTION( "Second partial run" ) {
+        REQUIRE( m_a == 1 );
+    }
 }
 
 TEMPLATE_TEST_CASE_METHOD(Template_Fixture, "A TEMPLATE_TEST_CASE_METHOD based test run that succeeds", "[class][template]", int, float, double) {
@@ -96,6 +111,17 @@ namespace Inner
         REQUIRE( m_a == 2 );
     }
 
+    TEST_CASE_PERSISTENT_FIXTURE( Persistent_Fixture, "A TEST_CASE_PERSISTENT_FIXTURE based test run that fails", "[.][class][failing]" )
+    {
+        SECTION( "First partial run" ) {
+            REQUIRE( m_a++ == 0 );
+        }
+
+        SECTION( "Second partial run" ) {
+            REQUIRE( m_a == 0 );
+        }
+    }
+
     TEMPLATE_TEST_CASE_METHOD(Template_Fixture,"A TEMPLATE_TEST_CASE_METHOD based test run that fails", "[.][class][template][failing]", int, float, double)
     {
         REQUIRE( Template_Fixture<TestType>::m_a == 2 );
@@ -114,4 +140,20 @@ namespace Inner
     {
         REQUIRE(Template_Fixture_2<TestType>{}.m_a.size() < 2);
     }
+} // namespace
+
+
+// We want a class in nested namespace so we can test JUnit's classname normalization.
+namespace {
+    namespace A {
+        namespace B {
+            class TestClass {};
+        }
+    }
+} // namespace
+
+TEST_CASE_METHOD( A::B::TestClass,
+                  "A TEST_CASE_METHOD testing junit classname normalization",
+                  "[class][approvals]" ) {
+    SUCCEED();
 }

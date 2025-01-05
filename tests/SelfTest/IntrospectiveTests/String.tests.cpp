@@ -1,7 +1,7 @@
 
 //              Copyright Catch2 Authors
 // Distributed under the Boost Software License, Version 1.0.
-//   (See accompanying file LICENSE_1_0.txt or copy at
+//   (See accompanying file LICENSE.txt or copy at
 //        https://www.boost.org/LICENSE_1_0.txt)
 
 // SPDX-License-Identifier: BSL-1.0
@@ -177,7 +177,7 @@ TEST_CASE("StringRef at compilation time", "[Strings][StringRef][constexpr]") {
         STATIC_REQUIRE_FALSE(sr1.empty());
         STATIC_REQUIRE(sr1.size() == 3);
 
-        using Catch::operator"" _sr;
+        using Catch::operator""_sr;
         constexpr auto sr2 = ""_sr;
         STATIC_REQUIRE(sr2.empty());
         STATIC_REQUIRE(sr2.size() == 0);

@@ -1,7 +1,7 @@
 
 //              Copyright Catch2 Authors
 // Distributed under the Boost Software License, Version 1.0.
-//   (See accompanying file LICENSE_1_0.txt or copy at
+//   (See accompanying file LICENSE.txt or copy at
 //        https://www.boost.org/LICENSE_1_0.txt)
 
 // SPDX-License-Identifier: BSL-1.0
@@ -49,6 +49,21 @@ TEST_CASE("Clara::Arg supports single-arg parse the way Opt does", "[clara][arg]
 
     p.parse( Catch::Clara::Args{ "UnitTest", "foo" } );
     REQUIRE(name == "foo");
+}
+
+TEST_CASE("Clara::Arg does not crash on incomplete input", "[clara][arg][compilation]") {
+    std::string name;
+    auto p = Catch::Clara::Arg(name, "-");
+
+    CHECK(name.empty());
+
+    auto result = p.parse( Catch::Clara::Args{ "UnitTest", "-" } );
+    CHECK( result );
+    CHECK( result.type() == Catch::Clara::Detail::ResultType::Ok );
+    const auto& parsed = result.value();
+    CHECK( parsed.type() == Catch::Clara::ParseResultType::NoMatch );
+    CHECK( parsed.remainingTokens().count() == 2 );
+    CHECK( name.empty() );
 }
 
 TEST_CASE("Clara::Opt supports accept-many lambdas", "[clara][opt]") {

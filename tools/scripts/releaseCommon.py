@@ -1,10 +1,6 @@
-from  __future__ import  print_function
-
 import os
-import sys
 import re
 import string
-import glob
 import fnmatch
 
 from scriptCommon import catchPath
@@ -15,6 +11,7 @@ versionPath = os.path.join( rootPath, "catch_version.cpp" )
 definePath = os.path.join(rootPath, 'catch_version_macros.hpp')
 readmePath = os.path.join( catchPath, "README.md" )
 cmakePath = os.path.join(catchPath, 'CMakeLists.txt')
+mesonPath = os.path.join(catchPath, 'meson.build')
 
 class Version:
     def __init__(self):
@@ -89,6 +86,16 @@ def updateCmakeFile(version):
             file.write(replacementRegex.sub(replacement, line))
 
 
+def updateMesonFile(version):
+    with open(mesonPath, 'rb') as file:
+        lines = file.readlines()
+    replacementRegex = re.compile(b'''version\\s*:\\s*'(\\d+.\\d+.\\d+)', # CML version placeholder, don't delete''')
+    replacement = '''version: '{0}', # CML version placeholder, don't delete'''.format(version.getVersionString()).encode('ascii')
+    with open(mesonPath, 'wb') as file:
+        for line in lines:
+            file.write(replacementRegex.sub(replacement, line))
+
+
 def updateVersionDefine(version):
     # First member of the tuple is the compiled regex object, the second is replacement if it matches
     replacementRegexes = [(re.compile(b'#define CATCH_VERSION_MAJOR \\d+'),'#define CATCH_VERSION_MAJOR {}'.format(version.majorVersion).encode('ascii')),
@@ -107,8 +114,8 @@ def updateVersionDefine(version):
 def updateVersionPlaceholder(filename, version):
     with open(filename, 'rb') as file:
         lines = file.readlines()
-    placeholderRegex = re.compile(b'in Catch[0-9]? X.Y.Z')
-    replacement = 'in Catch2 {}.{}.{}'.format(version.majorVersion, version.minorVersion, version.patchNumber).encode('ascii')
+    placeholderRegex = re.compile(b'Catch[0-9]? X.Y.Z')
+    replacement = 'Catch2 {}.{}.{}'.format(version.majorVersion, version.minorVersion, version.patchNumber).encode('ascii')
     with open(filename, 'wb') as file:
         for line in lines:
             file.write(placeholderRegex.sub(replacement, line))
@@ -132,4 +139,5 @@ def performUpdates(version):
     generateAmalgamatedFiles.generate_cpp()
 
     updateCmakeFile(version)
+    updateMesonFile(version)
     updateDocumentationVersionPlaceholders(version)

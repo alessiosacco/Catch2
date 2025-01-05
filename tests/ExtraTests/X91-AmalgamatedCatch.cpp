@@ -1,7 +1,7 @@
 
 //              Copyright Catch2 Authors
 // Distributed under the Boost Software License, Version 1.0.
-//   (See accompanying file LICENSE_1_0.txt or copy at
+//   (See accompanying file LICENSE.txt or copy at
 //        https://www.boost.org/LICENSE_1_0.txt)
 
 // SPDX-License-Identifier: BSL-1.0
@@ -16,10 +16,10 @@
 TEST_CASE("Just a dummy test") {
     auto i = GENERATE(1, 2, 3);
     SECTION("a") {
-        REQUIRE(1 != 4);
+        REQUIRE(i != 4);
     }
     SECTION("b") {
-        CHECK(1 != 5);
+        CHECK(i != 5);
     }
     REQUIRE_THAT(1,
                  Catch::Matchers::Predicate<int>([](int i) {

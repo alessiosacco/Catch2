@@ -1,7 +1,7 @@
 
 //              Copyright Catch2 Authors
 // Distributed under the Boost Software License, Version 1.0.
-//   (See accompanying file LICENSE_1_0.txt or copy at
+//   (See accompanying file LICENSE.txt or copy at
 //        https://www.boost.org/LICENSE_1_0.txt)
 
 // SPDX-License-Identifier: BSL-1.0
@@ -10,6 +10,8 @@
 #include <catch2/internal/catch_enforce.hpp>
 #include <catch2/internal/catch_case_insensitive_comparisons.hpp>
 #include <catch2/internal/catch_optional.hpp>
+
+#include <helpers/type_with_lit_0_comparisons.hpp>
 
 #if defined(_MSC_VER)
 #pragma warning(push)
@@ -85,4 +87,86 @@ TEST_CASE("Optional comparison ops", "[optional][approvals]") {
         REQUIRE( a == b );
         REQUIRE_FALSE( a != b );
     }
+}
+
+namespace {
+    struct MoveChecker {
+        bool has_moved = false;
+        MoveChecker() = default;
+        MoveChecker( MoveChecker const& rhs ) = default;
+        MoveChecker& operator=( MoveChecker const& rhs ) = default;
+        MoveChecker( MoveChecker&& rhs ) noexcept { rhs.has_moved = true; }
+        MoveChecker& operator=( MoveChecker&& rhs ) noexcept {
+            rhs.has_moved = true;
+            return *this;
+        }
+    };
+}
+
+TEST_CASE( "Optional supports move ops", "[optional][approvals]" ) {
+    using Catch::Optional;
+    MoveChecker a;
+    Optional<MoveChecker> opt_A( a );
+    REQUIRE_FALSE( a.has_moved );
+    REQUIRE_FALSE( opt_A->has_moved );
+
+    SECTION( "Move construction from element" ) {
+        Optional<MoveChecker> opt_B( CATCH_MOVE( a ) );
+        REQUIRE( a.has_moved );
+    }
+    SECTION( "Move assignment from element" ) {
+        opt_A = CATCH_MOVE( a );
+        REQUIRE( a.has_moved );
+    }
+    SECTION( "Move construction from optional" ) {
+        Optional<MoveChecker> opt_B( CATCH_MOVE( opt_A ) );
+        REQUIRE( opt_A->has_moved ); // NOLINT(clang-analyzer-cplusplus.Move)
+    }
+    SECTION( "Move assignment from optional" ) {
+        Optional<MoveChecker> opt_B( opt_A );
+        REQUIRE_FALSE( opt_A->has_moved );
+        opt_B = CATCH_MOVE( opt_A );
+        REQUIRE( opt_A->has_moved ); // NOLINT(clang-analyzer-cplusplus.Move)
+    }
+}
+
+TEST_CASE( "Decomposer checks that the argument is 0 when handling "
+           "only-0-comparable types",
+           "[decomposition][approvals]" ) {
+    TypeWithLit0Comparisons t{};
+
+    CATCH_INTERNAL_START_WARNINGS_SUPPRESSION
+    CATCH_INTERNAL_SUPPRESS_PARENTHESES_WARNINGS
+
+    REQUIRE_THROWS( Catch::Decomposer{} <= t == 42 );
+    REQUIRE_THROWS( Catch::Decomposer{} <= 42 == t );
+    REQUIRE_NOTHROW( Catch::Decomposer{} <= t == 0 );
+    REQUIRE_NOTHROW( Catch::Decomposer{} <= 0 == t );
+
+    REQUIRE_THROWS( Catch::Decomposer{} <= t != 42 );
+    REQUIRE_THROWS( Catch::Decomposer{} <= 42 != t );
+    REQUIRE_NOTHROW( Catch::Decomposer{} <= t != 0 );
+    REQUIRE_NOTHROW( Catch::Decomposer{} <= 0 != t );
+
+    REQUIRE_THROWS( Catch::Decomposer{} <= t < 42 );
+    REQUIRE_THROWS( Catch::Decomposer{} <= 42 < t );
+    REQUIRE_NOTHROW( Catch::Decomposer{} <= t < 0 );
+    REQUIRE_NOTHROW( Catch::Decomposer{} <= 0 < t );
+
+    REQUIRE_THROWS( Catch::Decomposer{} <= t <= 42 );
+    REQUIRE_THROWS( Catch::Decomposer{} <= 42 <= t );
+    REQUIRE_NOTHROW( Catch::Decomposer{} <= t <= 0 );
+    REQUIRE_NOTHROW( Catch::Decomposer{} <= 0 <= t );
+
+    REQUIRE_THROWS( Catch::Decomposer{} <= t > 42 );
+    REQUIRE_THROWS( Catch::Decomposer{} <= 42 > t );
+    REQUIRE_NOTHROW( Catch::Decomposer{} <= t > 0 );
+    REQUIRE_NOTHROW( Catch::Decomposer{} <= 0 > t );
+
+    REQUIRE_THROWS( Catch::Decomposer{} <= t >= 42 );
+    REQUIRE_THROWS( Catch::Decomposer{} <= 42 >= t );
+    REQUIRE_NOTHROW( Catch::Decomposer{} <= t >= 0 );
+    REQUIRE_NOTHROW( Catch::Decomposer{} <= 0 >= t );
+
+    CATCH_INTERNAL_STOP_WARNINGS_SUPPRESSION
 }

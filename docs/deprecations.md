@@ -26,6 +26,28 @@ to accurately probe the environment for this information so the flag
 where it will export `BAZEL_TEST=1` for purposes like the above. Catch2
 will now instead inspect the environment instead of relying on build configuration.
 
+### `IEventLister::skipTest( TestCaseInfo const& testInfo )`
+
+This event (including implementations in derived classes such as `ReporterBase`)
+is deprecated and will be removed in the next major release. It is currently
+invoked for all test cases that are not going to be executed due to the test run
+being aborted (when using `--abort` or `--abortx`). It is however
+**NOT** invoked for test cases that are [explicitly skipped using the `SKIP`
+macro](skipping-passing-failing.md#top).
+
+
+### Non-const function for `TEST_CASE_METHOD`
+
+> Deprecated in Catch2 vX.Y.Z
+
+Currently, the member function generated for `TEST_CASE_METHOD` is
+not `const` qualified. In the future, the generated member function will
+be `const` qualified, just as `TEST_CASE_PERSISTENT_FIXTURE` does.
+
+If you are mutating the fixture instance from within the test case, and
+want to keep doing so in the future, mark the mutated members as `mutable`.
+
+
 ---
 
 [Home](Readme.md#top)

@@ -1,7 +1,7 @@
 
 //              Copyright Catch2 Authors
 // Distributed under the Boost Software License, Version 1.0.
-//   (See accompanying file LICENSE_1_0.txt or copy at
+//   (See accompanying file LICENSE.txt or copy at
 //        https://www.boost.org/LICENSE_1_0.txt)
 
 // SPDX-License-Identifier: BSL-1.0
@@ -25,7 +25,7 @@ bool marginComparison(double lhs, double rhs, double margin) {
 namespace Catch {
 
     Approx::Approx ( double value )
-    :   m_epsilon( std::numeric_limits<float>::epsilon()*100. ),
+    :   m_epsilon( static_cast<double>(std::numeric_limits<float>::epsilon())*100. ),
         m_margin( 0.0 ),
         m_scale( 0.0 ),
         m_value( value )
@@ -70,10 +70,10 @@ namespace Catch {
     }
 
 namespace literals {
-    Approx operator "" _a(long double val) {
+    Approx operator ""_a(long double val) {
         return Approx(val);
     }
-    Approx operator "" _a(unsigned long long val) {
+    Approx operator ""_a(unsigned long long val) {
         return Approx(val);
     }
 } // end namespace literals

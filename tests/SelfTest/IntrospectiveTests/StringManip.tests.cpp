@@ -1,7 +1,7 @@
 
 //              Copyright Catch2 Authors
 // Distributed under the Boost Software License, Version 1.0.
-//   (See accompanying file LICENSE_1_0.txt or copy at
+//   (See accompanying file LICENSE.txt or copy at
 //        https://www.boost.org/LICENSE_1_0.txt)
 
 // SPDX-License-Identifier: BSL-1.0
@@ -56,6 +56,17 @@ TEST_CASE("replaceInPlace", "[string-manip]") {
     SECTION("replace no chars") {
         CHECK_FALSE(Catch::replaceInPlace(letters, "x", "z"));
         CHECK(letters == letters);
+    }
+    SECTION("no replace in already-replaced string") {
+        SECTION("lengthening") {
+            CHECK(Catch::replaceInPlace(letters, "c", "cc"));
+            CHECK(letters == "abccdefccg");
+        }
+        SECTION("shortening") {
+            std::string s = "----";
+            CHECK(Catch::replaceInPlace(s, "--", "-"));
+            CHECK(s == "--");
+        }
     }
     SECTION("escape '") {
         std::string s = "didn't";
